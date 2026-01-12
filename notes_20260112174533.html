@@ -1,0 +1,176 @@
+01.12 5:45 PM
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tabbed Entry App</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f5f5f5;
+    }
+    select, input, button, textarea {
+        margin: 5px 0;
+        padding: 6px;
+        width: 100%;
+    }
+    textarea {
+        height: 120px;
+    }
+    .container {
+        max-width: 800px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .entry {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+    }
+    .entry-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .row {
+        display: flex;
+        gap: 10px;
+    }
+    .row button {
+        flex: 1;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Tabbed Text Entry App</h2>
+
+    <!-- TAB SELECT -->
+    <label>Select Tab</label>
+    <select id="tabSelect"></select>
+
+    <div class="row">
+        <button onclick="addTab()">Add Tab</button>
+        <button onclick="renameTab()">Rename Tab</button>
+        <button onclick="deleteTab()">Delete Tab</button>
+    </div>
+
+    <hr>
+
+    <!-- NEW ENTRY -->
+    <h3>Create New Entry</h3>
+    <input type="text" id="entryName" placeholder="Entry name">
+    <textarea id="entryText" placeholder="Paste or type text here..."></textarea>
+    <button onclick="addEntry()">Save Entry</button>
+
+    <hr>
+
+    <!-- ENTRIES -->
+    <h3>Entries</h3>
+    <div id="entries"></div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("tabAppData")) || {
+    tabs: {
+        "Default": []
+    },
+    currentTab: "Default"
+};
+
+function saveData() {
+    localStorage.setItem("tabAppData", JSON.stringify(data));
+}
+
+function refreshTabs() {
+    const select = document.getElementById("tabSelect");
+    select.innerHTML = "";
+    Object.keys(data.tabs).forEach(tab => {
+        const option = document.createElement("option");
+        option.value = tab;
+        option.textContent = tab;
+        if (tab === data.currentTab) option.selected = true;
+        select.appendChild(option);
+    });
+    refreshEntries();
+}
+
+document.getElementById("tabSelect").addEventListener("change", e => {
+    data.currentTab = e.target.value;
+    saveData();
+    refreshEntries();
+});
+
+function addTab() {
+    const name = prompt("Enter new tab name:");
+    if (!name || data.tabs[name]) return;
+    data.tabs[name] = [];
+    data.currentTab = name;
+    saveData();
+    refreshTabs();
+}
+
+function renameTab() {
+    const newName = prompt("Enter new tab name:");
+    if (!newName || data.tabs[newName]) return;
+    data.tabs[newName] = data.tabs[data.currentTab];
+    delete data.tabs[data.currentTab];
+    data.currentTab = newName;
+    saveData();
+    refreshTabs();
+}
+
+function deleteTab() {
+    if (Object.keys(data.tabs).length === 1) {
+        alert("At least one tab is required.");
+        return;
+    }
+    if (!confirm("Delete this tab and all its entries?")) return;
+    delete data.tabs[data.currentTab];
+    data.currentTab = Object.keys(data.tabs)[0];
+    saveData();
+    refreshTabs();
+}
+
+function addEntry() {
+    const name = document.getElementById("entryName").value.trim();
+    const text = document.getElementById("entryText").value.trim();
+    if (!name || !text) return alert("Entry name and text required.");
+
+    data.tabs[data.currentTab].push({ name, text });
+    document.getElementById("entryName").value = "";
+    document.getElementById("entryText").value = "";
+    saveData();
+    refreshEntries();
+}
+
+function refreshEntries() {
+    const container = document.getElementById("entries");
+    container.innerHTML = "";
+    data.tabs[data.currentTab].forEach((entry, index) => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `
+            <div class="entry-title">${entry.name}</div>
+            <div>${entry.text.replace(/\n/g, "<br>")}</div>
+            <button onclick="deleteEntry(${index})">Delete</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function deleteEntry(index) {
+    data.tabs[data.currentTab].splice(index, 1);
+    saveData();
+    refreshEntries();
+}
+
+refreshTabs();
+</script>
+
+</body>
+</html>
+
