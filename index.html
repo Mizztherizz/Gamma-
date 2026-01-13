@@ -1,0 +1,211 @@
+01.13 6:44 PM
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tag Entry App</title>
+
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        background: #f4f6f8;
+        margin: 0;
+        padding: 16px;
+    }
+
+    .card {
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        max-width: 420px;
+        margin: auto;
+    }
+
+    h2 {
+        margin-top: 0;
+        text-align: center;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    button {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    button.secondary {
+        background: #e5e7eb;
+        color: #111;
+        margin-top: 8px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .tag-item {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .tag-item input {
+        flex: 1;
+    }
+
+    .tag-item button {
+        width: auto;
+        padding: 10px;
+        background: #ef4444;
+    }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="card" id="home">
+    <h2>Add Entry</h2>
+
+    <input id="titleInput" placeholder="Enter title">
+    <input id="linkInput" placeholder="Enter link">
+
+    <select id="tagSelect"></select>
+
+    <button onclick="submitEntry()">Save</button>
+    <button class="secondary" onclick="openSettings()">Manage Tags</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="card hidden" id="settings">
+    <h2>Manage Tags</h2>
+
+    <input id="newTagInput" placeholder="New tag name">
+    <button onclick="addTag()">Add Tag</button>
+
+    <div id="tagList"></div>
+
+    <button class="secondary" onclick="closeSettings()">Back</button>
+</div>
+
+<!-- GOOGLE FORM (HIDDEN SUBMIT) -->
+<form id="googleForm" class="hidden"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSeHJt1CPiok3Y8COZtTrtH-GneNf8YAI9G-jksT6s9CmqeKag/formResponse
+"
+      method="POST" target="hidden_iframe">
+
+    <!--  REPLACE entry IDs -->
+    <input name="entry.1189117194" id="gTitle">
+    <input name="entry.248135572" id="gLink">
+    <input name="entry.146069743" id="gTag">
+
+</form>
+<iframe name="hidden_iframe" class="hidden"></iframe>
+
+<script>
+let tags = JSON.parse(localStorage.getItem("tags")) || [
+    "Political subreddits",
+    "International reach",
+    "Meme subreddits",
+    "Teenage subreddits",
+    "Miscellaneous",
+    "Pseudoscience"
+];
+
+function renderTags() {
+    const select = document.getElementById("tagSelect");
+    const list = document.getElementById("tagList");
+
+    select.innerHTML = "";
+    list.innerHTML = "";
+
+    tags.forEach((tag, i) => {
+        // Dropdown
+        const opt = document.createElement("option");
+        opt.textContent = tag;
+        select.appendChild(opt);
+
+        // Settings list
+        const row = document.createElement("div");
+        row.className = "tag-item";
+
+        const input = document.createElement("input");
+        input.value = tag;
+        input.onchange = e => {
+            tags[i] = e.target.value;
+            saveTags();
+        };
+
+        const del = document.createElement("button");
+        del.textContent = "✕";
+        del.onclick = () => {
+            tags.splice(i,1);
+            saveTags();
+        };
+
+        row.append(input, del);
+        list.appendChild(row);
+    });
+}
+
+function saveTags() {
+    localStorage.setItem("tags", JSON.stringify(tags));
+    renderTags();
+}
+
+function addTag() {
+    const val = document.getElementById("newTagInput").value.trim();
+    if (!val) return;
+    tags.push(val);
+    document.getElementById("newTagInput").value = "";
+    saveTags();
+}
+
+function submitEntry() {
+    const title = titleInput.value;
+    const link = linkInput.value;
+    const tag = tagSelect.value;
+
+    if (!title || !link) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    // Send to Google Form
+    gTitle.value = title;
+    gLink.value = link;
+    gTag.value = tag;
+    googleForm.submit();
+
+    // Optional local save
+    titleInput.value = "";
+    linkInput.value = "";
+    alert("Saved!");
+}
+
+function openSettings() {
+    home.classList.add("hidden");
+    settings.classList.remove("hidden");
+}
+
+function closeSettings() {
+    settings.classList.add("hidden");
+    home.classList.remove("hidden");
+}
+
+renderTags();
+</script>
+
+</body>
+</html>
+
